@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import "./Auth.css";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -32,10 +33,10 @@ export default function Register() {
         return;
       }
 
-      alert("Registered successfully");
+      // auto login after register
+      localStorage.setItem("token", data.token);
 
-      // redirect to login
-      navigate("/login");
+      navigate("/dashboard");
 
     } catch (err) {
       console.error(err);
@@ -44,42 +45,47 @@ export default function Register() {
   };
 
   return (
-    <div>
-      <h2>Register</h2>
+    <div className="auth-container">
+      <div className="auth-card">
+        <h2>Create Account</h2>
+        <p className="auth-subtitle">
+          Start tracking your finances today
+        </p>
 
-      <form onSubmit={handleSubmit}>
-        <input
-          placeholder="Name"
-          value={form.name}
-          onChange={e =>
-            setForm({ ...form, name: e.target.value })
-          }
-        />
+        <form onSubmit={handleSubmit}>
+          <input
+            placeholder="Full Name"
+            value={form.name}
+            onChange={(e) =>
+              setForm({ ...form, name: e.target.value })
+            }
+          />
 
-        <input
-          placeholder="Email"
-          value={form.email}
-          onChange={e =>
-            setForm({ ...form, email: e.target.value })
-          }
-        />
+          <input
+            placeholder="Email address"
+            value={form.email}
+            onChange={(e) =>
+              setForm({ ...form, email: e.target.value })
+            }
+          />
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={form.password}
-          onChange={e =>
-            setForm({ ...form, password: e.target.value })
-          }
-        />
+          <input
+            type="password"
+            placeholder="Password"
+            value={form.password}
+            onChange={(e) =>
+              setForm({ ...form, password: e.target.value })
+            }
+          />
 
-        <button type="submit">Register</button>
-      </form>
+          <button type="submit">Create Account</button>
+        </form>
 
-      <p>
-        Already have an account?{" "}
-        <Link to="/login">Login</Link>
-      </p>
+        <p className="auth-footer">
+          Already have an account?
+          <Link to="/login"> Login</Link>
+        </p>
+      </div>
     </div>
   );
 }

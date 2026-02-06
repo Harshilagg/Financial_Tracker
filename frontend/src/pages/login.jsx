@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import "./Auth.css";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -30,8 +31,6 @@ export default function Login() {
       }
 
       localStorage.setItem("token", data.token);
-
-      // redirect after login
       navigate("/dashboard");
 
     } catch (err) {
@@ -41,34 +40,40 @@ export default function Login() {
   };
 
   return (
-    <div>
-      <h2>Login</h2>
+    <div className="auth-container">
+      <div className="auth-card">
+        <h2>Welcome Back</h2>
+        <p className="auth-subtitle">
+          Login to continue managing your finances
+        </p>
 
-      <form onSubmit={handleSubmit}>
-        <input
-          placeholder="Email"
-          value={form.email}
-          onChange={e =>
-            setForm({ ...form, email: e.target.value })
-          }
-        />
+        <form onSubmit={handleSubmit}>
+          <input
+            type="email"
+            placeholder="Email address"
+            value={form.email}
+            onChange={(e) =>
+              setForm({ ...form, email: e.target.value })
+            }
+          />
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={form.password}
-          onChange={e =>
-            setForm({ ...form, password: e.target.value })
-          }
-        />
+          <input
+            type="password"
+            placeholder="Password"
+            value={form.password}
+            onChange={(e) =>
+              setForm({ ...form, password: e.target.value })
+            }
+          />
 
-        <button type="submit">Login</button>
-      </form>
+          <button type="submit">Login</button>
+        </form>
 
-      <p>
-        Don't have an account?{" "}
-        <Link to="/register">Create Account</Link>
-      </p>
+        <p className="auth-footer">
+          Don’t have an account?
+          <Link to="/register"> Create Account</Link>
+        </p>
+      </div>
     </div>
   );
 }
