@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-export default function Login() {
+export default function Register() {
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
+    name: "",
     email: "",
     password: ""
   });
@@ -14,10 +15,12 @@ export default function Login() {
 
     try {
       const res = await fetch(
-        "http://localhost:6124/api/auth/login",
+        "http://localhost:6124/api/auth/register",
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json"
+          },
           body: JSON.stringify(form)
         }
       );
@@ -25,14 +28,14 @@ export default function Login() {
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.error || "Login failed");
+        alert(data.error || "Registration failed");
         return;
       }
 
-      localStorage.setItem("token", data.token);
+      alert("Registered successfully");
 
-      // redirect after login
-      navigate("/dashboard");
+      // redirect to login
+      navigate("/login");
 
     } catch (err) {
       console.error(err);
@@ -42,9 +45,17 @@ export default function Login() {
 
   return (
     <div>
-      <h2>Login</h2>
+      <h2>Register</h2>
 
       <form onSubmit={handleSubmit}>
+        <input
+          placeholder="Name"
+          value={form.name}
+          onChange={e =>
+            setForm({ ...form, name: e.target.value })
+          }
+        />
+
         <input
           placeholder="Email"
           value={form.email}
@@ -62,12 +73,12 @@ export default function Login() {
           }
         />
 
-        <button type="submit">Login</button>
+        <button type="submit">Register</button>
       </form>
 
       <p>
-        Don't have an account?{" "}
-        <Link to="/register">Create Account</Link>
+        Already have an account?{" "}
+        <Link to="/login">Login</Link>
       </p>
     </div>
   );
