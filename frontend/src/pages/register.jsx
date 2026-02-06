@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState,useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./Auth.css";
+import { AuthContext } from "../context/AuthContext";
 
 export default function Register() {
   const navigate = useNavigate();
+  const { login } = useContext(AuthContext);
 
   const [form, setForm] = useState({
     name: "",
@@ -34,9 +36,9 @@ export default function Register() {
       }
 
       // auto login after register
-      localStorage.setItem("token", data.token);
+     login(data.token);
 
-      navigate("/dashboard");
+      navigate("/dashboard", { replace: true });
 
     } catch (err) {
       console.error(err);
