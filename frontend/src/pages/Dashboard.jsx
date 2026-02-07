@@ -32,10 +32,12 @@ export default function Dashboard() {
     currency: "INR"
   });
 
-  const formatCurrency = (v) => {
-    const n = Number(v || 0);
-    return `₹${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  };
+  const formatCurrency = (value, currency = "INR") => {
+    return new Intl.NumberFormat("en-IN", {
+        style: "currency",
+        currency
+    }).format(Number(value || 0));
+    };
 
   const formatDate = (d) => {
     try {
@@ -431,7 +433,7 @@ export default function Dashboard() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis />
-                <Tooltip formatter={(v) => formatCurrency(v)} />
+                <Tooltip formatter={(v) => formatCurrency(v, "INR")} />
                 <Legend />
 
                 <Bar dataKey="income" fill="#4CAF50" radius={[6, 6, 0, 0]} />
@@ -535,7 +537,7 @@ export default function Dashboard() {
                         <div style={styles.transDesc}>{t.description || '-'}</div>
                         <div style={styles.transDate}>{formatDate(t.transaction_date)}</div>
                       </div>
-                      <div style={{ ...styles.transAmount, color: '#2e7d32' }}>+{formatCurrency(t.amount)}</div>
+                      <div style={{ ...styles.transAmount, color: '#2e7d32' }}>+{formatCurrency(t.amount, t.currency)}</div>
                     </div>
                   ))}
                 </div>
@@ -558,7 +560,7 @@ export default function Dashboard() {
                         <div style={styles.transDesc}>{t.description || '-'}</div>
                         <div style={styles.transDate}>{formatDate(t.transaction_date)}</div>
                       </div>
-                      <div style={{ ...styles.transAmount, color: '#c62828' }}>-{formatCurrency(t.amount)}</div>
+                      <div style={{ ...styles.transAmount, color: '#c62828' }}>-{formatCurrency(t.amount, t.currency)}</div>
                     </div>
                   ))}
                 </div>
@@ -614,6 +616,21 @@ export default function Dashboard() {
             }
             style={styles.input}
           />
+
+            <select
+                value={transactionForm.currency}
+                onChange={(e) =>
+                    setTransactionForm({
+                    ...transactionForm,
+                    currency: e.target.value
+                    })
+                }
+                style={styles.input}
+                >
+                <option value="INR">INR</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+            </select>
 
           <input
             placeholder="Description"
@@ -736,8 +753,11 @@ export default function Dashboard() {
 
 function SummaryCard({ title, value, color }) {
   const display = typeof value === 'number' || !isNaN(Number(value))
-    ? `₹${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-    : value;
+    ? new Intl.NumberFormat("en-IN", {
+        style: "currency",
+        currency: "INR"
+        }).format(Number(value))
+            : value;
 
   return (
     <div style={{ ...styles.card, borderTop: `4px solid ${color}` }}>

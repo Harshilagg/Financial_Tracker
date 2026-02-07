@@ -6,7 +6,7 @@ exports.getDashboardData = async (req, res) => {
 
     /* TOTAL INCOME */
     const incomeResult = await pool.query(
-      `SELECT COALESCE(SUM(amount),0) AS total_income
+      `SELECT COALESCE(SUM(base_amount),0) AS total_income
        FROM transactions
        WHERE user_id = $1 AND type = 'income'`,
       [userId]
@@ -14,7 +14,7 @@ exports.getDashboardData = async (req, res) => {
 
     /* TOTAL EXPENSE */
     const expenseResult = await pool.query(
-      `SELECT COALESCE(SUM(amount),0) AS total_expense
+      `SELECT COALESCE(SUM(base_amount),0) AS total_expense
        FROM transactions
        WHERE user_id = $1 AND type = 'expense'`,
       [userId]
@@ -26,7 +26,7 @@ exports.getDashboardData = async (req, res) => {
     /* EXPENSE BY CATEGORY */
     const categoryResult = await pool.query(
       `SELECT c.name,
-              SUM(t.amount) AS total
+              SUM(t.base_amount) AS total
        FROM transactions t
        JOIN categories c
        ON t.category_id = c.id
@@ -41,8 +41,8 @@ exports.getDashboardData = async (req, res) => {
     const monthlyResult = await pool.query(
       `SELECT
           TO_CHAR(transaction_date, 'YYYY-MM') AS month,
-          SUM(CASE WHEN type='income' THEN amount ELSE 0 END) AS income,
-          SUM(CASE WHEN type='expense' THEN amount ELSE 0 END) AS expense
+          SUM(CASE WHEN type='income' THEN base_amount ELSE 0 END) AS income,
+          SUM(CASE WHEN type='expense' THEN base_amount ELSE 0 END) AS expense
        FROM transactions
        WHERE user_id = $1
        GROUP BY month

@@ -8,7 +8,8 @@ CREATE TABLE users (
     password_hash TEXT,
 
     auth_provider VARCHAR(20) DEFAULT 'local',
-
+    
+    primary_currency VARCHAR(3) DEFAULT 'INR';
     currency_preference VARCHAR(3) DEFAULT 'USD',
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

@@ -43,23 +43,52 @@ exports.createTransaction = async (req, res) => {
       });
     }
 
-    const result = await pool.query(
-      `INSERT INTO transactions
-       (user_id, category_id, type, amount, currency,
-        description, transaction_date, is_refund)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-       RETURNING *`,
-      [
-        userId,
-        category_id,
-        type,
-        amount,
-        currency || "USD",
-        description,
-        transaction_date,
-        is_refund || false
-      ]
+    const userCurrencyResult = await pool.query(
+      `SELECT primary_currency FROM users WHERE id = $1`,
+      [userId]
     );
+
+    const baseCurrency =
+      userCurrencyResult.rows[0]?.primary_currency || "INR";
+
+      const rate = await getExchangeRate(currency || "USD", baseCurrency);
+      const baseAmount = Number(amount) * rate;
+
+      async function getExchangeRate(from, to) {
+        if (from === to) return 1;
+
+        // TEMPORARY static rates
+        const rates = {
+          USD: 83,
+          INR: 1,
+          EUR: 90
+        };
+
+        return rates[from] / rates[to];
+      }
+
+
+    const result = await pool.query(
+  `INSERT INTO transactions
+   (user_id, category_id, type, amount, currency,
+    description, transaction_date, is_refund,
+    base_currency, exchange_rate, base_amount)
+   VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+   RETURNING *`,
+  [
+    userId,
+    category_id,
+    type,
+    amount,
+    currency || "USD",
+    description,
+    transaction_date,
+    is_refund || false,
+    baseCurrency,
+    rate,
+    baseAmount
+  ]
+);
 
     res.json(result.rows[0]);
 

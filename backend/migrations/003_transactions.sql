@@ -10,7 +10,9 @@ CREATE TABLE transactions (
     amount NUMERIC(14,2) NOT NULL,
 
     currency VARCHAR(3) NOT NULL DEFAULT 'USD',
-
+    base_amount NUMERIC(14,2),
+    base_currency VARCHAR(3) DEFAULT 'INR',
+    exchange_rate NUMERIC(12,6),
     description TEXT,
 
     transaction_date DATE NOT NULL,
