@@ -1,5 +1,5 @@
 const pool = require("../config/db");
-
+const { convertToBase } = require("../utils/currency");
 /*
 CREATE TRANSACTION
 */
@@ -51,21 +51,8 @@ exports.createTransaction = async (req, res) => {
     const baseCurrency =
       userCurrencyResult.rows[0]?.primary_currency || "INR";
 
-      const rate = await getExchangeRate(currency || "USD", baseCurrency);
-      const baseAmount = Number(amount) * rate;
-
-      async function getExchangeRate(from, to) {
-        if (from === to) return 1;
-
-        // TEMPORARY static rates
-        const rates = {
-          USD: 83,
-          INR: 1,
-          EUR: 90
-        };
-
-        return rates[from] / rates[to];
-      }
+      const { exchange_rate, base_amount } =
+      await convertToBase(amount, currency || "USD", baseCurrency);
 
 
     const result = await pool.query(
@@ -85,8 +72,8 @@ exports.createTransaction = async (req, res) => {
     transaction_date,
     is_refund || false,
     baseCurrency,
-    rate,
-    baseAmount
+    exchange_rate,
+    base_amount
   ]
 );
 
@@ -136,22 +123,42 @@ exports.updateTransaction = async (req, res) => {
     const {
       category_id,
       amount,
+      currency,
       description,
       transaction_date
     } = req.body;
+
+    // get user's primary currency
+    const userCurrencyResult = await pool.query(
+      `SELECT primary_currency FROM users WHERE id = $1`,
+      [userId]
+    );
+
+    const baseCurrency =
+      userCurrencyResult.rows[0]?.primary_currency || "INR";
+
+    // recompute conversion
+    const { exchange_rate, base_amount } =
+      await convertToBase(amount, currency, baseCurrency);
 
     const result = await pool.query(
       `UPDATE transactions
        SET category_id = $1,
            amount = $2,
-           description = $3,
-           transaction_date = $4,
+           currency = $3,
+           exchange_rate = $4,
+           base_amount = $5,
+           description = $6,
+           transaction_date = $7,
            updated_at = CURRENT_TIMESTAMP
-       WHERE id = $5 AND user_id = $6
+       WHERE id = $8 AND user_id = $9
        RETURNING *`,
       [
         category_id,
         amount,
+        currency,
+        exchange_rate,
+        base_amount,
         description,
         transaction_date,
         id,

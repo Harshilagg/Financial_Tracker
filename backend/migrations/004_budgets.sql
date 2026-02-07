@@ -6,7 +6,9 @@ CREATE TABLE budgets (
 
     amount NUMERIC(14,2) NOT NULL,
     currency VARCHAR(3) NOT NULL,
-
+    base_amount NUMERIC(14,2),
+    base_currency VARCHAR(3),
+    exchange_rate NUMERIC(12,6),
     month INT NOT NULL,
     year INT NOT NULL,
 

@@ -32,12 +32,15 @@ export default function Dashboard() {
     currency: "INR"
   });
 
-  const formatCurrency = (value, currency = "INR") => {
-    return new Intl.NumberFormat("en-IN", {
-        style: "currency",
-        currency
-    }).format(Number(value || 0));
-    };
+  const formatCurrency = (value, currency) => {
+  const safeCurrency =
+    currency && currency.length === 3 ? currency : "INR";
+
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: safeCurrency
+  }).format(Number(value || 0));
+};
 
   const formatDate = (d) => {
     try {
@@ -537,7 +540,11 @@ export default function Dashboard() {
                         <div style={styles.transDesc}>{t.description || '-'}</div>
                         <div style={styles.transDate}>{formatDate(t.transaction_date)}</div>
                       </div>
-                      <div style={{ ...styles.transAmount, color: '#2e7d32' }}>+{formatCurrency(t.amount, t.currency)}</div>
+                      <div style={{ ...styles.transAmount, color: '#2e7d32' }}>+{formatCurrency(t.amount, t.currency)}
+                        <span style={{ fontSize: 12, color: "#777", marginLeft: 6 }}>
+                        ({formatCurrency(t.base_amount, "INR")})
+                        </span>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -560,7 +567,11 @@ export default function Dashboard() {
                         <div style={styles.transDesc}>{t.description || '-'}</div>
                         <div style={styles.transDate}>{formatDate(t.transaction_date)}</div>
                       </div>
-                      <div style={{ ...styles.transAmount, color: '#c62828' }}>-{formatCurrency(t.amount, t.currency)}</div>
+                      <div style={{ ...styles.transAmount, color: '#c62828' }}>-{formatCurrency(t.amount, t.currency)}
+                        <span style={{ fontSize: 12, color: "#777", marginLeft: 6 }}>
+                        ({formatCurrency(t.base_amount, "INR")})
+                        </span>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -661,90 +672,136 @@ export default function Dashboard() {
       </section>
 
       {/* BUDGETS */}
-      <section style={styles.section}>
+        <section style={styles.section}>
         <h3>Budgets</h3>
 
         {/* Create budget form */}
-        <form onSubmit={handleAddBudget} style={{ display: "grid", gap: "8px", maxWidth: 420, marginBottom: 12 }}>
-          <select
+        <form
+            onSubmit={handleAddBudget}
+            style={{
+            display: "grid",
+            gap: "8px",
+            maxWidth: 420,
+            marginBottom: 12
+            }}
+        >
+            <select
             value={budgetForm.category_id}
-            onChange={(e) => setBudgetForm({ ...budgetForm, category_id: e.target.value })}
+            onChange={(e) =>
+                setBudgetForm({ ...budgetForm, category_id: e.target.value })
+            }
             style={styles.input}
-          >
+            >
             <option value="">Select Expense Category</option>
-            {categories.filter(c => c.type === 'expense').map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
+            {categories
+                .filter((c) => c.type === "expense")
+                .map((c) => (
+                <option key={c.id} value={c.id}>
+                    {c.name}
+                </option>
+                ))}
+            </select>
 
-          <input
+            <input
             placeholder="Budget amount"
             type="number"
             value={budgetForm.amount}
-            onChange={(e) => setBudgetForm({ ...budgetForm, amount: e.target.value })}
+            onChange={(e) =>
+                setBudgetForm({ ...budgetForm, amount: e.target.value })
+            }
             style={styles.input}
-          />
+            />
 
-          <input
+            <input
             type="month"
             value={budgetForm.month}
-            onChange={(e) => setBudgetForm({ ...budgetForm, month: e.target.value })}
+            onChange={(e) =>
+                setBudgetForm({ ...budgetForm, month: e.target.value })
+            }
             style={styles.input}
-          />
+            />
 
-          <select
+            <select
             value={budgetForm.currency}
-            onChange={(e) => setBudgetForm({ ...budgetForm, currency: e.target.value })}
+            onChange={(e) =>
+                setBudgetForm({ ...budgetForm, currency: e.target.value })
+            }
             style={styles.input}
-          >
+            >
             <option value="INR">INR</option>
             <option value="USD">USD</option>
-          </select>
+            <option value="EUR">EUR</option>
+            </select>
 
-          <button type="submit" style={styles.primaryBtn}>Create Budget</button>
+            <button type="submit" style={styles.primaryBtn}>
+            Create Budget
+            </button>
         </form>
 
         {budgets.length === 0 ? (
-          <p>No budgets set</p>
+            <p>No budgets set</p>
         ) : (
-          budgets.map((b) => {
-            // compute spent locally from transactions to ensure consistency
-            const localSpent = transactions
-              .filter(t => t.type === 'expense' && String(t.category_name) === String(b.category))
-              .filter(t => {
-                const d = new Date(t.transaction_date);
-                return (d.getMonth() + 1) === Number(b.month) && d.getFullYear() === Number(b.year);
-              })
-              .reduce((sum, t) => sum + Number(t.amount || 0), 0);
+            budgets.map((b) => {
+            // backend already gives spent in base currency
+            const spentToShow = Number(b.spent || 0);
 
-            const spentToShow = Number.isFinite(localSpent) ? localSpent : Number(b.spent || 0);
-            const percent = (Number(spentToShow) / Number(b.budget_amount)) * 100;
+            // progress must be calculated in base currency
+            const percent =
+                (spentToShow / Number(b.base_amount || 1)) * 100;
 
             return (
-              <div key={b.id} style={styles.budgetCard}>
+                <div key={b.id} style={styles.budgetCard}>
                 <div style={styles.row}>
-                  <strong>{b.category} — {b.month}/{b.year}</strong>
-                  <span>
-                    ₹{formatCurrency(spentToShow)} / {formatCurrency(b.budget_amount)}
-                  </span>
+                    <strong>
+                    {b.category} — {b.month}/{b.year}
+                    </strong>
+
+                    {/* Budget display */}
+                    <span>
+                    {formatCurrency(
+                        spentToShow,
+                        b.base_currency
+                    )}{" "}
+                    /{" "}
+                    {formatCurrency(
+                        b.base_amount,
+                        b.base_currency
+                    )}
+                    </span>
                 </div>
 
+                {/* Optional: show original currency */}
+                <div style={{ fontSize: 12, color: "#777" }}>
+                    Budget:{" "}
+                    {formatCurrency(b.budget_amount, b.currency)}{" "}
+                    ({formatCurrency(b.base_amount, b.base_currency)})
+                </div>
+
+                {/* Progress bar */}
                 <div style={styles.progressBar}>
-                  <div
+                    <div
                     style={{
-                      ...styles.progressFill,
-                      width: `${Math.min(percent, 100)}%`,
-                      background: percent > 100 ? "#F44336" : "#4CAF50"
+                        ...styles.progressFill,
+                        width: `${Math.min(percent, 100)}%`,
+                        background:
+                        percent > 100 ? "#F44336" : "#4CAF50"
                     }}
-                  />
+                    />
                 </div>
 
-                <small>Remaining: ₹{(Number(b.budget_amount) - spentToShow).toFixed(2)}</small>
-              </div>
+                {/* Remaining */}
+                <small>
+                    Remaining:{" "}
+                    {formatCurrency(
+                    Number(b.base_amount) - spentToShow,
+                    b.base_currency
+                    )}
+                </small>
+                </div>
             );
-          })
+            })
         )}
-      </section>
+        </section>
     </div>
   );
 }
