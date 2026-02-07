@@ -384,12 +384,20 @@ export default function Dashboard() {
   return (
     <div style={styles.container}>
       {/* HEADER */}
-      <div style={styles.header}>
-        <h1>Dashboard</h1>
+      {/* HEADER */}
+        <div style={styles.header}>
+        <div>
+            <h1 style={styles.headerTitle}>Financial Dashboard</h1>
+            <p style={styles.headerSubtitle}>
+            Track your income, expenses & savings
+            </p>
+        </div>
+
         <button style={styles.logoutBtn} onClick={handleLogout}>
-          Logout
+            Logout
         </button>
-      </div>
+    </div>
+
 
       {/* SUMMARY CARDS */}
     <div style={styles.summary}>
@@ -743,25 +751,50 @@ function SummaryCard({ title, value, color }) {
 
 const styles = {
   container: {
-    padding: "40px",
-    maxWidth: "1000px",
-    margin: "auto",
-    fontFamily: "Arial"
+  padding: "40px",
+  maxWidth: "1400px",
+  margin: "auto",
+  fontFamily: "Inter, Arial, sans-serif",
+  background: "#f5f5dc",
+  minHeight: "100vh"
   },
+
   header: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: "30px"
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  padding: "24px 28px",
+  borderRadius: "12px",
+  marginBottom: "30px",
+  background: "linear-gradient(135deg, #1976d2, #42a5f5)",
+  color: "#fff",
+  boxShadow: "0 4px 14px rgba(0,0,0,0.12)"
   },
+    headerTitle: {
+    margin: 0,
+    fontSize: "26px",
+    fontWeight: "700",
+    letterSpacing: "0.3px"
+    },
+
+    headerSubtitle: {
+    margin: "4px 0 0 0",
+    opacity: 0.9,
+    fontSize: "14px"
+    },
+
   logoutBtn: {
-    padding: "8px 14px",
-    background: "#333",
-    color: "#fff",
-    border: "none",
-    borderRadius: "6px",
-    cursor: "pointer"
+  padding: "10px 16px",
+  background: "#ffffff",
+  color: "#1976d2",
+  border: "none",
+  borderRadius: "8px",
+  fontWeight: "600",
+  cursor: "pointer",
+  transition: "0.2s",
+  boxShadow: "0 2px 6px rgba(0,0,0,0.15)"
   },
+
   summary: {
   display: "grid",
   gridTemplateColumns: "repeat(3, 1fr)",
