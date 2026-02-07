@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useContext, useEffect, useState, useCallback } from "react";
 import { AuthContext } from "../context/AuthContext";
+import {ResponsiveContainer,BarChart,Bar,XAxis,YAxis,CartesianGrid,Tooltip,Legend} from "recharts";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -12,7 +13,8 @@ export default function Dashboard() {
     total_income: 0,
     total_expense: 0,
     savings: 0,
-    expense_by_category: []
+    expense_by_category: [],
+    monthly_summary: []
   });
 
   const [budgets, setBudgets] = useState([]);
@@ -69,7 +71,8 @@ export default function Dashboard() {
       total_income: data.total_income || 0,
       total_expense: data.total_expense || 0,
       savings: data.savings || 0,
-      expense_by_category: data.expense_by_category || []
+      expense_by_category: data.expense_by_category || [],
+      monthly_summary: data.monthly_summary || []
     });
 
   } catch (err) {
@@ -369,7 +372,12 @@ export default function Dashboard() {
       return acc;
     }, {});
 
-  const monthlySummary = dashboard.monthly_summary || [];
+    const monthlySummary = dashboard.monthly_summary || [];
+    const monthlyChartData = monthlySummary.map((m) => ({
+        month: m.month,
+        income: Number(m.income),
+        expense: Number(m.expense)
+    }));
 
   /* ================= UI ================= */
 
@@ -377,35 +385,55 @@ export default function Dashboard() {
     <div style={styles.container}>
       {/* HEADER */}
       <div style={styles.header}>
-        <h1>Financial Dashboard</h1>
+        <h1>Dashboard</h1>
         <button style={styles.logoutBtn} onClick={handleLogout}>
           Logout
         </button>
       </div>
 
       {/* SUMMARY CARDS */}
-      <div style={styles.summary}>
-        <SummaryCard title="Income" value={dashboard.total_income} color="#4CAF50" />
-        <SummaryCard title="Expense" value={dashboard.total_expense} color="#F44336" />
-        <SummaryCard title="Savings" value={dashboard.savings} color="#2196F3" />
-        <section style={styles.section}>
-            <h3>Monthly Summary</h3>
+    <div style={styles.summary}>
+        <SummaryCard
+            title="Income"
+            value={dashboard.total_income}
+            color="#4CAF50"
+        />
+        <SummaryCard
+            title="Expense"
+            value={dashboard.total_expense}
+            color="#F44336"
+        />
+        <SummaryCard
+            title="Savings"
+            value={dashboard.savings}
+            color="#2196F3"
+        />
+    </div>
 
-            {monthlySummary.length === 0 ? (
-                <p>No data</p>
-            ) : (
-                monthlySummary.map((m) => (
-                <div key={m.month} style={styles.row}>
-                    <span>{m.month}</span>
-                    <span>
-                    Income: ₹{Number(m.income).toFixed(2)} |
-                    Expense: ₹{Number(m.expense).toFixed(2)}
-                    </span>
-                </div>
-                ))
-            )}
-            </section>
-      </div>
+    {/* MONTHLY BAR CHART */}
+    <section style={styles.section}>
+        <h3>Monthly Income vs Expense</h3>
+
+        {monthlyChartData.length === 0 ? (
+            <p>No monthly data yet</p>
+        ) : (
+            <div style={{ width: "100%", height: 320 }}>
+            <ResponsiveContainer>
+                <BarChart data={monthlyChartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip formatter={(v) => formatCurrency(v)} />
+                <Legend />
+
+                <Bar dataKey="income" fill="#4CAF50" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="expense" fill="#F44336" radius={[6, 6, 0, 0]} />
+                </BarChart>
+            </ResponsiveContainer>
+            </div>
+        )}
+    </section>
+
 
       {/* EXPENSE BY CATEGORY */}
       <section style={styles.section}>
@@ -723,7 +751,7 @@ const styles = {
   header: {
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
     marginBottom: "30px"
   },
   logoutBtn: {
@@ -735,14 +763,15 @@ const styles = {
     cursor: "pointer"
   },
   summary: {
-    display: "flex",
-    gap: "20px",
-    marginBottom: "30px"
+  display: "grid",
+  gridTemplateColumns: "repeat(3, 1fr)",
+  gap: "20px",
+  marginBottom: "20px"
   },
   card: {
     flex: 1,
     background: "#fff",
-    padding: "20px",
+    padding: "15px",
     borderRadius: "8px",
     boxShadow: "0 2px 6px rgba(0,0,0,0.1)"
   },
