@@ -71,6 +71,15 @@ export default function Login() {
           <button type="submit">Login</button>
         </form>
 
+        <div style={{ marginTop: 12 }}>
+          <button
+            onClick={() => (window.location.href = "http://localhost:6124/api/auth/google")}
+            style={{ marginTop: 8, padding: '10px 14px', width: '100%', background: '#4285F4', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer' }}
+          >
+            Sign in with Google
+          </button>
+        </div>
+
         <p className="auth-footer">
           Don’t have an account?
           <Link to="/register"> Create Account</Link>

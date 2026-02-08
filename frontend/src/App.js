@@ -4,6 +4,7 @@ import { AuthContext } from "./context/AuthContext";
 
 import Login from "./pages/login";
 import Register from "./pages/register";
+import GoogleOAuthCallback from "./pages/GoogleOAuthCallback";
 import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -40,6 +41,8 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+        <Route path="/auth/google/callback" element={<GoogleOAuthCallback />} />
 
         <Route
           path="/"

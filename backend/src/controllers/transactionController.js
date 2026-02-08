@@ -99,12 +99,48 @@ exports.createTransaction = async (req, res) => {
     }
 
     res.json(result.rows[0]);
+    // after responding, check budgets and notify (non-blocking)
+    checkBudgetAndNotify(userId, category_id, transaction_date);
 
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
   }
 };
+
+// non-blocking: after creating transaction, check budget overruns and notify
+const notificationService = require('../services/notificationService');
+
+async function checkBudgetAndNotify(userId, category_id, transaction_date) {
+  try {
+    // determine month/year
+    const d = new Date(transaction_date);
+    const month = d.getMonth() + 1;
+    const year = d.getFullYear();
+
+    // find budget for this user+category+month
+    const bres = await pool.query(
+      `SELECT * FROM budgets WHERE user_id=$1 AND category_id=$2 AND month=$3 AND year=$4`,
+      [userId, category_id, month, year]
+    );
+    if (!bres.rows.length) return;
+    const budget = bres.rows[0];
+
+    // read monthly_category_spend for this user/category/month
+    const sres = await pool.query(
+      `SELECT base_spent FROM monthly_category_spend WHERE user_id=$1 AND category_id=$2 AND month=$3 AND year=$4`,
+      [userId, category_id, month, year]
+    );
+    const spent = Number(sres.rows[0]?.base_spent || 0);
+    if (Number(budget.base_amount || 0) < spent) {
+      // fire-and-forget
+      notificationService.notifyBudgetOverrun(userId, budget, spent).catch(e=>console.error(e));
+    }
+  } catch (e) {
+    console.error('checkBudgetAndNotify error', e.message || e);
+  }
+}
+
 
 
 /*

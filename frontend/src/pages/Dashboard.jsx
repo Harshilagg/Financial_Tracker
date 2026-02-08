@@ -32,6 +32,8 @@ export default function Dashboard() {
     currency: "INR"
   });
 
+  const [transactionReceipt, setTransactionReceipt] = useState(null);
+
   const formatCurrency = (value, currency) => {
   const safeCurrency =
     currency && currency.length === 3 ? currency : "INR";
@@ -331,6 +333,31 @@ export default function Dashboard() {
         transaction_date: "",
         currency: "INR"
       });
+
+      // if a receipt file is attached, upload it
+      if (transactionReceipt && data && data.id) {
+        try {
+          const fd = new FormData();
+          fd.append('receipt', transactionReceipt);
+
+          const up = await fetch(`http://localhost:6124/api/transactions/${data.id}/receipts`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+            body: fd
+          });
+
+          if (!up.ok) {
+            console.warn('Receipt upload failed');
+          } else {
+            // optionally refresh transactions to show receipt link
+            fetchTransactions();
+          }
+        } catch (err) {
+          console.error('Receipt upload error', err);
+        }
+      }
+
+      setTransactionReceipt(null);
 
       // refresh all relevant data
       fetchDashboard();
@@ -684,6 +711,13 @@ export default function Dashboard() {
               })
             }
             style={styles.input}
+          />
+
+          <input
+            type="file"
+            accept="image/*,application/pdf"
+            onChange={(e) => setTransactionReceipt(e.target.files && e.target.files[0])}
+            style={{ marginTop: 6 }}
           />
 
           <button type="submit" style={styles.primaryBtn}>Add Transaction</button>

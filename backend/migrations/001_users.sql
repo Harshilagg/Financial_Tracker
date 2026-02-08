@@ -6,10 +6,10 @@ CREATE TABLE users (
     name VARCHAR(100) NOT NULL,
     email VARCHAR(150) UNIQUE NOT NULL,
     password_hash TEXT,
-
+    google_sub TEXT,
     auth_provider VARCHAR(20) DEFAULT 'local',
     
-    primary_currency VARCHAR(3) DEFAULT 'INR';
+    primary_currency VARCHAR(3) DEFAULT 'INR',
     currency_preference VARCHAR(3) DEFAULT 'USD',
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
