@@ -8,3 +8,4 @@ CREATE TABLE receipts (
   FOREIGN KEY(transaction_id) REFERENCES transactions(id) ON DELETE CASCADE,
   FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
