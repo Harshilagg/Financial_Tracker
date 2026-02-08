@@ -29,3 +29,26 @@ exports.updateMonthlySpend = async ({
     [user_id, category_id, month, year, base_amount]
   );
 };
+
+exports.updateMonthlySummary = async ({
+  user_id,
+  transaction_date,
+  base_amount,
+  type
+}) => {
+  const date = new Date(transaction_date);
+  const month = date.getMonth() + 1;
+  const year = date.getFullYear();
+
+  const column = type === "income" ? "total_income" : "total_expense";
+
+  await pool.query(
+    `INSERT INTO monthly_user_summary
+    (user_id, month, year, ${column})
+    VALUES ($1, $2, $3, $4)
+    ON CONFLICT (user_id, month, year)
+    DO UPDATE SET
+      ${column} = monthly_user_summary.${column} + EXCLUDED.${column}`,
+    [user_id, month, year, base_amount]
+  );
+};

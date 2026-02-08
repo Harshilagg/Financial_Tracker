@@ -40,38 +40,15 @@ exports.createBudget = async (req, res) => {
     const { exchange_rate, base_amount } =
       await convertToBase(amount, currency || "USD", baseCurrency);
 
-    const result = await pool.query(
-  `
-  SELECT
-    b.id,
-    c.name AS category,
-    b.amount AS budget_amount,
-    b.currency,
-    b.base_amount,
-    b.base_currency,
-    b.month,
-    b.year,
+    const insert = await pool.query(
+      `INSERT INTO budgets
+       (user_id, category_id, amount, currency, base_amount, base_currency, exchange_rate, month, year)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+       RETURNING id, user_id, category_id, amount, currency, base_amount, base_currency, exchange_rate, month, year`,
+      [userId, category_id, amount, currency, base_amount, baseCurrency, exchange_rate, month, year]
+    );
 
-    COALESCE(m.base_spent, 0) AS spent,
-    (b.base_amount - COALESCE(m.base_spent, 0)) AS remaining
-
-  FROM budgets b
-  JOIN categories c
-    ON b.category_id = c.id
-
-  LEFT JOIN monthly_category_spend m
-    ON m.user_id = b.user_id
-    AND m.category_id = b.category_id
-    AND m.month = b.month
-    AND m.year = b.year
-
-  WHERE b.user_id = $1
-
-  ORDER BY b.year DESC, b.month DESC;
-  `,
-  [userId]
-  );
-      res.json(result.rows[0]);
+    res.json(insert.rows[0]);
 
     } catch (err) {
       console.error(err);
@@ -86,9 +63,20 @@ exports.getBudgets = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const result = await pool.query(
-      `
-      SELECT
+    // optional filters (month/year) to view budgets for specific months
+    const month = req.query.month ? parseInt(req.query.month, 10) : null;
+    const year = req.query.year ? parseInt(req.query.year, 10) : null;
+
+    let params = [userId];
+    let whereClause = `WHERE b.user_id = $1`;
+
+    if (month && year) {
+      params.push(month, year);
+      whereClause = `WHERE b.user_id = $1 AND b.month = $2 AND b.year = $3`;
+    }
+
+    const q = `
+    SELECT
       b.id,
       c.name AS category,
       b.amount AS budget_amount,
@@ -106,12 +94,12 @@ exports.getBudgets = async (req, res) => {
     JOIN categories c ON b.category_id = c.id
 
     LEFT JOIN transactions t
-    ON t.category_id = b.category_id
-    AND t.user_id = b.user_id
-    AND EXTRACT(MONTH FROM t.transaction_date)::INT = b.month
-    AND EXTRACT(YEAR FROM t.transaction_date)::INT = b.year
+      ON t.category_id = b.category_id
+      AND t.user_id = b.user_id
+      AND EXTRACT(MONTH FROM t.transaction_date)::INT = b.month
+      AND EXTRACT(YEAR FROM t.transaction_date)::INT = b.year
 
-    WHERE b.user_id = $1
+    ${whereClause}
 
     GROUP BY
       b.id,
@@ -124,11 +112,42 @@ exports.getBudgets = async (req, res) => {
       b.year
 
     ORDER BY b.year DESC, b.month DESC;
-      `,
-      [userId]
-    );
+    `;
 
-    res.json(result.rows);
+    const result = await pool.query(q, params);
+
+    let rows = result.rows;
+
+    // if month/year filter provided, also include categories that have spend in that month but no budget
+    if (month && year) {
+      const spendRows = await pool.query(
+        `SELECT
+           NULL::uuid AS id,
+           c.name AS category,
+           NULL::numeric AS budget_amount,
+           NULL::text AS currency,
+           COALESCE(m.base_spent,0) AS base_amount,
+           COALESCE(m.base_spent,0) AS spent,
+           COALESCE(m.base_spent,0) AS remaining,
+           m.month,
+           m.year,
+           c.id AS category_id
+         FROM monthly_category_spend m
+         JOIN categories c ON c.id = m.category_id
+         WHERE m.user_id = $1 AND m.month = $2 AND m.year = $3
+         AND NOT EXISTS (
+           SELECT 1 FROM budgets b
+           WHERE b.user_id = $1 AND b.category_id = c.id AND b.month = $2 AND b.year = $3
+         )
+        `,
+        [userId, month, year]
+      );
+
+      // append spendRows that are not already present
+      rows = rows.concat(spendRows.rows);
+    }
+
+    res.json(rows);
 
   } catch (err) {
     console.error(err);

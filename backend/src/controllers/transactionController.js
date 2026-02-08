@@ -1,5 +1,6 @@
 const pool = require("../config/db");
 const { convertToBase } = require("../utils/currency");
+const { updateMonthlySpend, updateMonthlySummary } = require("../utils/monthlySpend");
 
 /*
 CREATE TRANSACTION
@@ -77,6 +78,25 @@ exports.createTransaction = async (req, res) => {
     base_amount
   ]
 );
+
+    // update monthly summaries (category and user-level)
+    try {
+      await updateMonthlySpend({
+        user_id: userId,
+        category_id,
+        transaction_date,
+        base_amount
+      });
+
+      await updateMonthlySummary({
+        user_id: userId,
+        transaction_date,
+        base_amount,
+        type
+      });
+    } catch (e) {
+      console.error("Failed updating monthly summaries:", e.message || e);
+    }
 
     res.json(result.rows[0]);
 

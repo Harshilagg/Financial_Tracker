@@ -4,60 +4,55 @@ exports.getDashboardData = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    /* TOTAL INCOME */
-    const incomeResult = await pool.query(
-      `SELECT COALESCE(SUM(base_amount),0) AS total_income
-       FROM transactions
-       WHERE user_id = $1 AND type = 'income'`,
+    /* TOTAL INCOME AND EXPENSE */
+    const summaryResult = await pool.query(
+      `SELECT COALESCE(SUM(total_income), 0) AS total_income,
+              COALESCE(SUM(total_expense), 0) AS total_expense
+       FROM monthly_user_summary
+       WHERE user_id = $1`,
       [userId]
     );
 
-    /* TOTAL EXPENSE */
-    const expenseResult = await pool.query(
-      `SELECT COALESCE(SUM(base_amount),0) AS total_expense
-       FROM transactions
-       WHERE user_id = $1 AND type = 'expense'`,
-      [userId]
-    );
-
-    const totalIncome = parseFloat(incomeResult.rows[0].total_income);
-    const totalExpense = parseFloat(expenseResult.rows[0].total_expense);
+    const totalIncome = parseFloat(summaryResult.rows[0].total_income);
+    const totalExpense = parseFloat(summaryResult.rows[0].total_expense);
 
     /* EXPENSE BY CATEGORY */
     const categoryResult = await pool.query(
       `SELECT c.name,
-              SUM(t.base_amount) AS total
-       FROM transactions t
+              COALESCE(SUM(mcs.base_spent), 0) AS total
+       FROM monthly_category_spend mcs
        JOIN categories c
-       ON t.category_id = c.id
-       WHERE t.user_id = $1
-       AND t.type = 'expense'
+       ON mcs.category_id = c.id
+       WHERE mcs.user_id = $1
        GROUP BY c.name
        ORDER BY total DESC`,
       [userId]
     );
 
-    /* MONTHLY SUMMARY */
+    /* MONTHLY SUMMARY (per month/year) */
     const monthlyResult = await pool.query(
-      `SELECT
-          TO_CHAR(transaction_date, 'YYYY-MM') AS month,
-          SUM(CASE WHEN type='income' THEN base_amount ELSE 0 END) AS income,
-          SUM(CASE WHEN type='expense' THEN base_amount ELSE 0 END) AS expense
-       FROM transactions
+      `SELECT month, year, COALESCE(total_income,0) AS income, COALESCE(total_expense,0) AS expense
+       FROM monthly_user_summary
        WHERE user_id = $1
-       GROUP BY month
-       ORDER BY month`,
+       ORDER BY year DESC, month DESC
+       LIMIT 12`,
       [userId]
     );
+
+    // get user's base currency
+    const userRes = await pool.query(`SELECT primary_currency FROM users WHERE id = $1`, [userId]);
+    const base_currency = userRes.rows[0]?.primary_currency || "INR";
+
+    const savings = totalIncome - totalExpense;
 
     res.json({
       total_income: totalIncome,
       total_expense: totalExpense,
-      savings: totalIncome - totalExpense,
+      savings,
+      base_currency,
       expense_by_category: categoryResult.rows,
       monthly_summary: monthlyResult.rows
     });
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });

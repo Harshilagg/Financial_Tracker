@@ -17,3 +17,24 @@ CREATE TABLE users (
 );
 
 CREATE INDEX idx_users_email ON users(email);
+
+CREATE TABLE monthly_category_spend (
+    user_id UUID NOT NULL,
+    category_id UUID NOT NULL,
+    month INT NOT NULL,
+    year INT NOT NULL,
+    base_spent NUMERIC DEFAULT 0,
+    PRIMARY KEY (user_id, category_id, month, year),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
+);
+
+CREATE TABLE monthly_user_summary (
+    user_id UUID NOT NULL,
+    month INT NOT NULL,
+    year INT NOT NULL,
+    total_income NUMERIC DEFAULT 0,
+    total_expense NUMERIC DEFAULT 0,
+    PRIMARY KEY (user_id, month, year),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);

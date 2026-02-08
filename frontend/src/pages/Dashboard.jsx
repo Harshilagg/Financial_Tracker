@@ -384,6 +384,25 @@ export default function Dashboard() {
         expense: Number(m.expense)
     }));
 
+        // GROUP BUDGETS BY MONTH
+        const groupedBudgets = budgets.reduce((acc, b) => {
+        const key = `${b.year}-${String(b.month).padStart(2, "0")}`;
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(b);
+        return acc;
+        }, {});
+
+        // SORT MONTHS DESC (latest first)
+        const sortedBudgetMonths = Object.keys(groupedBudgets)
+        .sort((a, b) => new Date(b) - new Date(a));
+
+        // SORT BUDGETS INSIDE MONTH (highest spent first)
+        sortedBudgetMonths.forEach((key) => {
+        groupedBudgets[key].sort(
+            (a, b) => Number(b.spent || 0) - Number(a.spent || 0)
+        );
+        });
+
   /* ================= UI ================= */
 
   return (
@@ -740,67 +759,99 @@ export default function Dashboard() {
 
         {budgets.length === 0 ? (
             <p>No budgets set</p>
-        ) : (
-            budgets.map((b) => {
-            // backend already gives spent in base currency
-            const spentToShow = Number(b.spent || 0);
+            ) : (
+            sortedBudgetMonths.map((monthKey) => {
+                const monthBudgets = groupedBudgets[monthKey];
 
-            // progress must be calculated in base currency
-            const percent =
-                (spentToShow / Number(b.base_amount || 1)) * 100;
+                const [year, month] = monthKey.split("-");
+                const monthLabel = new Date(year, month - 1).toLocaleString(
+                "default",
+                { month: "long", year: "numeric" }
+                );
 
-            return (
-                <div key={b.id} style={styles.budgetCard}>
-                <div style={styles.row}>
-                    <strong>
-                    {b.category} — {b.month}/{b.year}
-                    </strong>
+                // MONTH SUMMARY
+                const totalBudget = monthBudgets.reduce(
+                (sum, b) => sum + Number(b.base_amount || 0),
+                0
+                );
 
-                    {/* Budget display */}
-                    <span>
-                    {formatCurrency(
-                        spentToShow,
-                        b.base_currency
-                    )}{" "}
-                    /{" "}
-                    {formatCurrency(
-                        b.base_amount,
-                        b.base_currency
-                    )}
-                    </span>
-                </div>
+                const totalSpent = monthBudgets.reduce(
+                (sum, b) => sum + Number(b.spent || 0),
+                0
+                );
 
-                {/* Optional: show original currency */}
-                <div style={{ fontSize: 12, color: "#777" }}>
-                    Budget:{" "}
-                    {formatCurrency(b.budget_amount, b.currency)}{" "}
-                    ({formatCurrency(b.base_amount, b.base_currency)})
-                </div>
-
-                {/* Progress bar */}
-                <div style={styles.progressBar}>
-                    <div
+                return (
+                <div
+                    key={monthKey}
                     style={{
-                        ...styles.progressFill,
-                        width: `${Math.min(percent, 100)}%`,
-                        background:
-                        percent > 100 ? "#F44336" : "#4CAF50"
+                    marginBottom: 28,
+                    paddingBottom: 16,
+                    borderBottom: "1px solid #eee"
                     }}
-                    />
-                </div>
+                >
+                    {/* MONTH HEADER */}
+                    <div style={{ marginBottom: 10 }}>
+                    <h4 style={{ margin: 0 }}>{monthLabel}</h4>
 
-                {/* Remaining */}
-                <small>
-                    Remaining:{" "}
-                    {formatCurrency(
-                    Number(b.base_amount) - spentToShow,
-                    b.base_currency
-                    )}
-                </small>
+                    <small style={{ color: "#666" }}>
+                        {formatCurrency(totalSpent, monthBudgets[0].base_currency)}
+                        {" / "}
+                        {formatCurrency(totalBudget, monthBudgets[0].base_currency)}
+                        {" • Remaining "}
+                        {formatCurrency(
+                        totalBudget - totalSpent,
+                        monthBudgets[0].base_currency
+                        )}
+                    </small>
+                    </div>
+
+                    {monthBudgets.map((b) => {
+                    const spentToShow = Number(b.spent || 0);
+                    const percent =
+                        (spentToShow / Number(b.base_amount || 1)) * 100;
+
+                    return (
+                        <div key={b.id} style={styles.budgetCard}>
+                        <div style={styles.row}>
+                            <strong>{b.category}</strong>
+
+                            <span>
+                            {formatCurrency(spentToShow, b.base_currency)} /{" "}
+                            {formatCurrency(b.base_amount, b.base_currency)}
+                            </span>
+                        </div>
+
+                        <div style={{ fontSize: 12, color: "#777" }}>
+                            Budget:{" "}
+                            {formatCurrency(b.budget_amount, b.currency)} (
+                            {formatCurrency(b.base_amount, b.base_currency)})
+                        </div>
+
+                        <div style={styles.progressBar}>
+                            <div
+                            style={{
+                                ...styles.progressFill,
+                                width: `${Math.min(percent, 100)}%`,
+                                background:
+                                percent > 100 ? "#F44336" : "#4CAF50"
+                            }}
+                            />
+                        </div>
+
+                        <small>
+                            Remaining:{" "}
+                            {formatCurrency(
+                            Number(b.base_amount) - spentToShow,
+                            b.base_currency
+                            )}
+                        </small>
+                        </div>
+                    );
+                    })}
                 </div>
-            );
+                );
             })
-        )}
+            )}
         </section>
     </div>
   );
