@@ -436,7 +436,7 @@ export default function Dashboard() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis />
-                <Tooltip formatter={(v) => formatCurrency(v, "INR")} />
+                <Tooltip formatter={(v) => formatCurrency(v, dashboard.base_currency)} />
                 <Legend />
 
                 <Bar dataKey="income" fill="#4CAF50" radius={[6, 6, 0, 0]} />

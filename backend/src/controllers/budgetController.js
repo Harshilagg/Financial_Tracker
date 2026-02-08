@@ -41,32 +41,43 @@ exports.createBudget = async (req, res) => {
       await convertToBase(amount, currency || "USD", baseCurrency);
 
     const result = await pool.query(
-      `INSERT INTO budgets
-       (user_id, category_id, amount, currency,
-        base_amount, base_currency, exchange_rate,
-        month, year)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-       RETURNING *`,
-      [
-        userId,
-        category_id,
-        amount,
-        currency || "USD",
-        base_amount,
-        baseCurrency,
-        exchange_rate,
-        month,
-        year
-      ]
-    );
+  `
+  SELECT
+    b.id,
+    c.name AS category,
+    b.amount AS budget_amount,
+    b.currency,
+    b.base_amount,
+    b.base_currency,
+    b.month,
+    b.year,
 
-    res.json(result.rows[0]);
+    COALESCE(m.base_spent, 0) AS spent,
+    (b.base_amount - COALESCE(m.base_spent, 0)) AS remaining
 
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Server error" });
-  }
-};
+  FROM budgets b
+  JOIN categories c
+    ON b.category_id = c.id
+
+  LEFT JOIN monthly_category_spend m
+    ON m.user_id = b.user_id
+    AND m.category_id = b.category_id
+    AND m.month = b.month
+    AND m.year = b.year
+
+  WHERE b.user_id = $1
+
+  ORDER BY b.year DESC, b.month DESC;
+  `,
+  [userId]
+  );
+      res.json(result.rows[0]);
+
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Server error" });
+    }
+  };
 
 /*
 GET BUDGETS WITH PROGRESS
