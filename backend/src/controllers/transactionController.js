@@ -151,14 +151,22 @@ exports.getTransactions = async (req, res) => {
     const userId = req.user.id;
 
     const result = await pool.query(
-      `SELECT t.*, c.name as category_name
-       FROM transactions t
-       LEFT JOIN categories c
-       ON t.category_id = c.id
-       WHERE t.user_id = $1
-       ORDER BY transaction_date DESC`,
-      [userId]
-    );
+        `SELECT t.*, c.name as category_name,
+           r.id AS receipt_id, r.filename AS receipt_filename, r.storage_url AS receipt_url, r.created_at AS receipt_created_at
+         FROM transactions t
+         LEFT JOIN LATERAL (
+           SELECT id, filename, storage_url, created_at
+           FROM receipts
+           WHERE transaction_id = t.id
+           ORDER BY created_at DESC
+           LIMIT 1
+         ) r ON true
+         LEFT JOIN categories c
+         ON t.category_id = c.id
+         WHERE t.user_id = $1
+         ORDER BY transaction_date DESC`,
+        [userId]
+      );
 
     res.json(result.rows);
 

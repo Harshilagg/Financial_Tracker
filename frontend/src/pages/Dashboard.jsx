@@ -20,6 +20,7 @@ export default function Dashboard() {
   const [budgets, setBudgets] = useState([]);
   const [categories, setCategories] = useState([]);
   const [transactions, setTransactions] = useState([]);
+  const [notifications, setNotifications] = useState([]);
   const [categoryForm, setCategoryForm] = useState({ name: "", type: "expense" });
   const [budgetForm, setBudgetForm] = useState({ category_id: "", amount: "", month: `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`, currency: "INR" });
 
@@ -33,6 +34,8 @@ export default function Dashboard() {
   });
 
   const [transactionReceipt, setTransactionReceipt] = useState(null);
+  const [toastMessage, setToastMessage] = useState(null);
+  const [receiptModal, setReceiptModal] = useState({ open: false, url: null, filename: null });
 
   const formatCurrency = (value, currency) => {
   const safeCurrency =
@@ -145,6 +148,26 @@ export default function Dashboard() {
       setTransactions(Array.isArray(data) ? data : data.transactions || []);
     } catch (err) {
       console.error("fetchTransactions error", err);
+    }
+  }, [token, logout, navigate]);
+
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const res = await fetch("http://localhost:6124/api/notifications", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (res.status === 401) {
+        logout();
+        navigate("/login", { replace: true });
+        return;
+      }
+
+      const data = await res.json();
+      setNotifications(Array.isArray(data) ? data : []);
+      return data;
+    } catch (err) {
+      console.error("fetchNotifications error", err);
     }
   }, [token, logout, navigate]);
 
@@ -363,6 +386,15 @@ export default function Dashboard() {
       fetchDashboard();
       fetchBudgets();
       fetchTransactions();
+      // refresh notifications and show toast if budget_overrun created very recently
+      await fetchNotifications();
+      // find any recent budget_overrun within last 10 seconds
+      const now = Date.now();
+      const recent = notifications.find(n => n.type === 'budget_overrun' && !n.is_read && (now - new Date(n.created_at).getTime()) < 10000);
+      if (recent) {
+        setToastMessage('Budget exceeded. Email sent.');
+        setTimeout(() => setToastMessage(null), 5000);
+      }
     } catch (err) {
       console.error("add transaction error", err);
       alert("Transaction failed: network error");
@@ -377,13 +409,77 @@ export default function Dashboard() {
     fetchBudgets();
     fetchCategories();
     fetchTransactions();
-  }, [token, fetchDashboard, fetchBudgets, fetchCategories, fetchTransactions]);
+    fetchNotifications();
+  }, [token, fetchDashboard, fetchBudgets, fetchCategories, fetchTransactions, fetchNotifications]);
 
   if (!token) return null;
 
   if (loading) {
     return <p style={{ padding: 40 }}>Loading dashboard...</p>;
   }
+
+  // toast banner
+  const Toast = ({ message }) => (
+    <div style={{ position: 'fixed', top: 20, right: 20, background: '#323232', color: '#fff', padding: '10px 14px', borderRadius: 8, boxShadow: '0 4px 14px rgba(0,0,0,0.2)' }}>{message}</div>
+  );
+
+  const ReceiptModal = ({ open, url, filename, onClose }) => {
+    if (!open) return null;
+
+    const isPdf = filename && filename.toLowerCase().endsWith('.pdf');
+
+    return (
+      <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={onClose}>
+        <div style={{ width: '90%', height: '90%', background: '#fff', borderRadius: 8, overflow: 'hidden', position: 'relative' }} onClick={(e)=>e.stopPropagation()}>
+          <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 2010 }}>
+            <button onClick={onClose} style={{ padding: '6px 10px', borderRadius: 6, border: 'none', background: '#1976d2', color: '#fff', cursor: 'pointer' }}>Close</button>
+          </div>
+          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fafafa' }}>
+            {isPdf ? (
+              <iframe src={url} title={filename} style={{ width: '100%', height: '100%', border: 'none' }} />
+            ) : (
+              <img src={url} alt={filename} style={{ maxWidth: '100%', maxHeight: '100%' }} />
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Notifications panel (simple)
+  const handleNotificationClick = async (n) => {
+    try {
+      // mark read
+      await fetch(`http://localhost:6124/api/notifications/${n.id}/read`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      // optimistic update
+      setNotifications((prev) => prev.map(p => p.id === n.id ? { ...p, is_read: true } : p));
+    } catch (e) {
+      console.error('mark notification read failed', e);
+    }
+  };
+
+  const handleViewReceipt = async (receiptId) => {
+    try {
+      const res = await fetch(`http://localhost:6124/api/receipts/${receiptId}/url`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(()=>({}));
+        alert(err.error || 'Could not get receipt URL');
+        return;
+      }
+      const data = await res.json();
+      if (data.url) {
+        setReceiptModal({ open: true, url: data.url, filename: data.filename || '' });
+      }
+    } catch (e) {
+      console.error('fetch receipt url failed', e);
+      alert('Failed to open receipt');
+    }
+  };
 
   // group transactions by type and category for display
   const incomeByCategory = transactions
@@ -403,6 +499,8 @@ export default function Dashboard() {
       acc[key].push(t);
       return acc;
     }, {});
+
+    const unreadNotifications = notifications.filter(n => !n.is_read);
 
     const monthlySummary = dashboard.monthly_summary || [];
     const monthlyChartData = monthlySummary.map((m) => ({
@@ -444,9 +542,17 @@ export default function Dashboard() {
             </p>
         </div>
 
-        <button style={styles.logoutBtn} onClick={handleLogout}>
-            Logout
-        </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              {unreadNotifications.length > 0 && (
+                <div style={{ background: '#fff8e1', padding: '6px 10px', borderRadius: 8, color: '#8a6d00' }}>
+                   🔔 ({unreadNotifications.length}) new
+                </div>
+              )}
+
+              <button style={styles.logoutBtn} onClick={handleLogout}>
+                Logout
+              </button>
+            </div>
     </div>
 
 
@@ -492,6 +598,29 @@ export default function Dashboard() {
             </div>
         )}
     </section>
+
+    {/* NOTIFICATIONS PANEL */}
+    {notifications.length > 0 && (
+      <section style={{ ...styles.section, marginTop: 0 }}>
+        <h3>Notifications</h3>
+        <div style={{ display: 'grid', gap: 8 }}>
+          {notifications.map((n) => (
+            <div key={n.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 8, background: n.is_read ? '#fafafa' : '#fff8e1', borderRadius: 6 }}>
+              <div style={{ cursor: 'pointer' }} onClick={() => handleNotificationClick(n)}>
+                <div style={{ fontWeight: n.is_read ? 500 : 700 }}>{n.type.replace('_',' ')}</div>
+                <div style={{ fontSize: 13, color: '#333' }}>{n.message}</div>
+                <div style={{ fontSize: 12, color: '#777' }}>{new Date(n.created_at).toLocaleString()}</div>
+              </div>
+              {!n.is_read && <button style={{ ...styles.primaryBtn, padding: '6px 8px' }} onClick={() => handleNotificationClick(n)}>Mark read</button>}
+            </div>
+          ))}
+        </div>
+      </section>
+    )}
+
+    <ReceiptModal open={receiptModal.open} url={receiptModal.url} filename={receiptModal.filename} onClose={() => setReceiptModal({ open: false, url: null, filename: null })} />
+
+    {toastMessage && <Toast message={toastMessage} />}
 
 
       {/* EXPENSE BY CATEGORY */}
@@ -586,10 +715,16 @@ export default function Dashboard() {
                         <div style={styles.transDesc}>{t.description || '-'}</div>
                         <div style={styles.transDate}>{formatDate(t.transaction_date)}</div>
                       </div>
-                      <div style={{ ...styles.transAmount, color: '#2e7d32' }}>+{formatCurrency(t.amount, t.currency)}
+                      <div style={{ ...styles.transAmount, color: '#2e7d32' }}>
+                        +{formatCurrency(t.amount, t.currency)}
                         <span style={{ fontSize: 12, color: "#777", marginLeft: 6 }}>
-                        ({formatCurrency(t.base_amount, "INR")})
+                          ({formatCurrency(t.base_amount, "INR")})
                         </span>
+                        {t.receipt_id && (
+                          <div style={{ marginTop: 6 }}>
+                            <button onClick={() => handleViewReceipt(t.receipt_id)} style={{ background: 'transparent', border: 'none', color: '#1976d2', cursor: 'pointer', padding: 0 }}>View Receipt</button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -613,10 +748,16 @@ export default function Dashboard() {
                         <div style={styles.transDesc}>{t.description || '-'}</div>
                         <div style={styles.transDate}>{formatDate(t.transaction_date)}</div>
                       </div>
-                      <div style={{ ...styles.transAmount, color: '#c62828' }}>-{formatCurrency(t.amount, t.currency)}
+                      <div style={{ ...styles.transAmount, color: '#c62828' }}>
+                        -{formatCurrency(t.amount, t.currency)}
                         <span style={{ fontSize: 12, color: "#777", marginLeft: 6 }}>
-                        ({formatCurrency(t.base_amount, "INR")})
+                          ({formatCurrency(t.base_amount, "INR")})
                         </span>
+                        {t.receipt_id && (
+                          <div style={{ marginTop: 6 }}>
+                            <button onClick={() => handleViewReceipt(t.receipt_id)} style={{ background: 'transparent', border: 'none', color: '#1976d2', cursor: 'pointer', padding: 0 }}>View Receipt</button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}

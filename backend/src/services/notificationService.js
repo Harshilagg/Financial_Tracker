@@ -37,7 +37,29 @@ async function sendEmail(to, subject, text) {
 }
 
 async function notifyBudgetOverrun(user_id, budget, spent) {
-  const message = `Your budget for ${budget.category} (${budget.month}/${budget.year}) has been exceeded. Spent: ${spent}, Budget: ${budget.base_amount}`;
+  // try to resolve category name if available; budgets table stores category_id
+  let categoryName = budget.category || null;
+  try {
+    if (!categoryName && budget.category_id) {
+      const cres = await pool.query('SELECT name FROM categories WHERE id = $1', [budget.category_id]);
+      categoryName = cres.rows[0]?.name || null;
+    }
+  } catch (e) {
+    console.error('Failed to lookup category for notification', e.message || e);
+  }
+
+  // sanitize common placeholder strings that may have been stored accidentally
+  if (typeof categoryName === 'string') {
+    const cleaned = categoryName.trim();
+    if (!cleaned || cleaned.toLowerCase() === 'undefined' || cleaned.toLowerCase() === 'null') {
+      categoryName = null;
+    } else {
+      categoryName = cleaned;
+    }
+  }
+
+  const displayCategory = categoryName || 'selected category';
+  const message = `Your budget for ${displayCategory} (${budget.month}/${budget.year}) has been exceeded. Spent: ${spent}, Budget: ${budget.base_amount}`;
 
   // insert notification row (best-effort)
   await createNotificationRow(user_id, 'budget_overrun', message);
