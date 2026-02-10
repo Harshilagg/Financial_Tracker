@@ -17,8 +17,8 @@ export default function Register() {
     e.preventDefault();
 
     try {
-      const res = await fetch(
-        "http://localhost:6124/api/auth/register",
+          const res = await fetch(
+            `${process.env.REACT_APP_API_URL}/api/auth/register`,
         {
           method: "POST",
           headers: {
@@ -85,7 +85,7 @@ export default function Register() {
 
         <div style={{ marginTop: 12 }}>
           <button
-            onClick={() => (window.location.href = "http://localhost:6124/api/auth/google")}
+              onClick={() => (window.location.href = `${process.env.REACT_APP_API_URL}/api/auth/google`)}
             style={{ marginTop: 8, padding: '10px 14px', width: '100%', background: '#4285F4', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer' }}
           >
             Sign in with Google

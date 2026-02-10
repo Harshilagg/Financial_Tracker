@@ -19,7 +19,7 @@ exports.googleCallback = async (req, res) => {
   try {
     const { code } = req.query;
     if (!code) {
-      const redirectBase = process.env.FRONTEND_URL || 'http://localhost:3000';
+        const redirectBase = process.env.FRONTEND_URL || 'https://fj-frontend.onrender.com';
       return res.redirect(`${redirectBase}/auth/google/callback?error=missing_code`);
     }
 
@@ -52,12 +52,12 @@ exports.googleCallback = async (req, res) => {
     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
     // redirect to frontend callback with token in query string
-    const redirectBase = process.env.FRONTEND_URL || 'http://localhost:3000';
+      const redirectBase = process.env.FRONTEND_URL || 'https://fj-frontend.onrender.com';
     const redirectUrl = `${redirectBase}/auth/google/callback?token=${encodeURIComponent(token)}`;
     return res.redirect(redirectUrl);
   } catch (e) {
     console.error('Google callback error', e.message || e);
-    const redirectBase = process.env.FRONTEND_URL || 'http://localhost:3000';
+      const redirectBase = process.env.FRONTEND_URL || 'https://fj-frontend.onrender.com';
     return res.redirect(`${redirectBase}/auth/google/callback?error=oauth_failed`);
   }
 };

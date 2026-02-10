@@ -12,7 +12,24 @@ const importRoutes = require("./routes/importRoutes");
 
 const app = express();
 
-app.use(cors());
+// CORS: allow localhost (dev) and deployed frontend (prod). Choose origin dynamically.
+const allowedOrigins = [
+    'http://localhost:3000',
+    'https://fj-frontend.onrender.com'
+];
+
+app.use(cors({
+    origin: function(origin, callback) {
+        // allow non-browser requests with no origin (e.g., curl, server-to-server)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true
+}));
 app.use(express.json());
 
 app.get("/", (req, res) => {
