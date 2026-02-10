@@ -78,7 +78,7 @@ exports.createTransaction = async (req, res) => {
     base_amount
   ]
 );
-
+  console.log('Transaction created', { userId, category_id, type, amount, currency, transaction_date, base_amount });
     // update monthly summaries (category and user-level)
     try {
       await updateMonthlySpend({
