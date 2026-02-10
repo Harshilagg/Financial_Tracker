@@ -446,6 +446,76 @@ export default function Dashboard() {
     );
   };
 
+  function ImportStatementSection() {
+    const [file, setFile] = useState(null);
+    const [loadingImport, setLoadingImport] = useState(false);
+    const [result, setResult] = useState(null);
+    const [error, setError] = useState(null);
+
+    const handleUpload = async () => {
+      if (!file) return setError('Please select a CSV file');
+      setLoadingImport(true);
+      setError(null);
+      setResult(null);
+      try {
+        const fd = new FormData();
+        fd.append('statement', file);
+
+        const res = await fetch('http://localhost:6124/api/imports/statements', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: fd
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          setError(data.error || data.message || 'Import failed');
+        } else {
+          setResult(data);
+          // refresh data per requirements
+          fetchDashboard();
+          fetchBudgets();
+          fetchTransactions();
+        }
+      } catch (e) {
+        console.error('import failed', e);
+        setError('Network error during import');
+      } finally {
+        setLoadingImport(false);
+      }
+    };
+
+    return (
+      <section style={styles.section}>
+        <h3>Import Bank Statement</h3>
+
+        <div style={{ display: 'grid', gap: 8, maxWidth: 520 }}>
+          <input
+            type="file"
+            accept="text/csv,application/csv,text/plain"
+            onChange={(e) => setFile(e.target.files && e.target.files[0])}
+            style={styles.input}
+          />
+
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <button onClick={handleUpload} style={styles.primaryBtn} disabled={loadingImport}>{loadingImport ? 'Uploading...' : 'Upload CSV'}</button>
+            {loadingImport && <div style={{ color: '#666' }}>Processing...</div>}
+          </div>
+
+          {error && <div style={{ color: '#c62828' }}>{error}</div>}
+
+          {result && (
+            <div style={{ marginTop: 8, background: '#fafafa', padding: 10, borderRadius: 6 }}>
+              <div><strong>Imported:</strong> {result.created_count ?? 0}</div>
+              <div><strong>Duplicates skipped:</strong> {result.skipped_count ?? 0}</div>
+              <div><strong>New categories created:</strong> {result.new_categories_count ?? 'N/A'}</div>
+            </div>
+          )}
+        </div>
+      </section>
+    );
+  }
+
   // Notifications panel (simple)
   const handleNotificationClick = async (n) => {
     try {
@@ -864,6 +934,8 @@ export default function Dashboard() {
           <button type="submit" style={styles.primaryBtn}>Add Transaction</button>
         </form>
       </section>
+
+      <ImportStatementSection />
 
       {/* BUDGETS */}
         <section style={styles.section}>
