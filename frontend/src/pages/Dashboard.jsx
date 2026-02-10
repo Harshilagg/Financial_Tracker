@@ -65,7 +65,7 @@ export default function Dashboard() {
 
   const fetchDashboard = useCallback(async () => {
   try {
-    const res = await fetch(`${process.env.REACT_APP_API_URL}/api/dashboard`, {
+    const res = await fetch("https://fj-be-r2-harshil-aggarwal-iit-kharagpur.onrender.com/api/dashboard", {
       headers: { Authorization: `Bearer ${token}` }
     });
 
@@ -96,7 +96,7 @@ export default function Dashboard() {
 
   const fetchBudgets = useCallback(async () => {
     try {
-      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/budgets`, {
+      const res = await fetch("https://fj-be-r2-harshil-aggarwal-iit-kharagpur.onrender.com/api/budgets", {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -115,7 +115,7 @@ export default function Dashboard() {
 
   const fetchCategories = useCallback(async () => {
     try {
-      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/categories`, {
+      const res = await fetch("https://fj-be-r2-harshil-aggarwal-iit-kharagpur.onrender.com/api/categories", {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -134,7 +134,7 @@ export default function Dashboard() {
 
   const fetchTransactions = useCallback(async () => {
     try {
-      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/transactions`, {
+      const res = await fetch("https://fj-be-r2-harshil-aggarwal-iit-kharagpur.onrender.com/api/transactions", {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -153,7 +153,7 @@ export default function Dashboard() {
 
   const fetchNotifications = useCallback(async () => {
     try {
-      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/notifications`, {
+      const res = await fetch("https://fj-be-r2-harshil-aggarwal-iit-kharagpur.onrender.com/api/notifications", {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -190,7 +190,7 @@ export default function Dashboard() {
     }
 
     try {
-      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/categories`, {
+      const res = await fetch("https://fj-be-r2-harshil-aggarwal-iit-kharagpur.onrender.com/api/categories", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -225,7 +225,7 @@ export default function Dashboard() {
     if (!window.confirm("Delete this category? This cannot be undone.")) return;
 
     try {
-      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/categories/${id}`, {
+      const res = await fetch(`https://fj-be-r2-harshil-aggarwal-iit-kharagpur.onrender.com/api/categories/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -281,7 +281,7 @@ export default function Dashboard() {
         year
       };
 
-      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/budgets`, {
+      const res = await fetch("https://fj-be-r2-harshil-aggarwal-iit-kharagpur.onrender.com/api/budgets", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -323,7 +323,7 @@ export default function Dashboard() {
     }
 
     try {
-      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/transactions`, {
+      const res = await fetch("https://fj-be-r2-harshil-aggarwal-iit-kharagpur.onrender.com/api/transactions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -363,7 +363,7 @@ export default function Dashboard() {
           const fd = new FormData();
           fd.append('receipt', transactionReceipt);
 
-          const up = await fetch(`${process.env.REACT_APP_API_URL}/api/transactions/${data.id}/receipts`, {
+          const up = await fetch(`https://fj-be-r2-harshil-aggarwal-iit-kharagpur.onrender.com/api/transactions/${data.id}/receipts`, {
             method: 'POST',
             headers: { Authorization: `Bearer ${token}` },
             body: fd
@@ -461,7 +461,7 @@ export default function Dashboard() {
         const fd = new FormData();
         fd.append('statement', file);
 
-        const res = await fetch(`${process.env.REACT_APP_API_URL}/api/imports/statements`, {
+        const res = await fetch('https://fj-be-r2-harshil-aggarwal-iit-kharagpur.onrender.com/api/imports/statements', {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}` },
           body: fd
@@ -524,7 +524,7 @@ export default function Dashboard() {
   const handleNotificationClick = async (n) => {
     try {
       // mark read
-      await fetch(`${process.env.REACT_APP_API_URL}/api/notifications/${n.id}/read`, {
+          await fetch(`https://fj-be-r2-harshil-aggarwal-iit-kharagpur.onrender.com/api/notifications/${n.id}/read`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -537,7 +537,7 @@ export default function Dashboard() {
 
   const handleViewReceipt = async (receiptId) => {
     try {
-      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/receipts/${receiptId}/url`, {
+      const res = await fetch(`https://fj-be-r2-harshil-aggarwal-iit-kharagpur.onrender.com/api/receipts/${receiptId}/url`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) {

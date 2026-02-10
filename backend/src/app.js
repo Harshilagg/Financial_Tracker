@@ -12,9 +12,8 @@ const importRoutes = require("./routes/importRoutes");
 
 const app = express();
 
-// CORS: allow localhost (dev) and deployed frontend (prod). Choose origin dynamically.
+// CORS: allow only deployed frontend origin in production.
 const allowedOrigins = [
-    'http://localhost:3000',
     'https://fj-frontend.onrender.com'
 ];
 

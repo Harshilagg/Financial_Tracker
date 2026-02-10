@@ -17,7 +17,7 @@ export default function Login() {
 
     try {
           const res = await fetch(
-            `${process.env.REACT_APP_API_URL}/api/auth/login`,
+            "https://fj-be-r2-harshil-aggarwal-iit-kharagpur.onrender.com/api/auth/login",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -73,7 +73,7 @@ export default function Login() {
 
         <div style={{ marginTop: 12 }}>
           <button
-              onClick={() => (window.location.href = `${process.env.REACT_APP_API_URL}/api/auth/google`)}
+              onClick={() => (window.location.href = "https://fj-be-r2-harshil-aggarwal-iit-kharagpur.onrender.com/api/auth/google")}
             style={{ marginTop: 8, padding: '10px 14px', width: '100%', background: '#4285F4', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer' }}
           >
             Sign in with Google
