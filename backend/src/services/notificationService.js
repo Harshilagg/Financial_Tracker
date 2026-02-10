@@ -8,6 +8,7 @@ if (SENDGRID_API_KEY) {
 
 async function createNotificationRow(user_id, type, message) {
   try {
+    console.log('Inserting notification row', { user_id, type, message });
     await pool.query(
       `INSERT INTO notifications(user_id, type, message) VALUES($1,$2,$3)`,
       [user_id, type, message]
@@ -47,7 +48,7 @@ async function notifyBudgetOverrun(user_id, budget, spent) {
   } catch (e) {
     console.error('Failed to lookup category for notification', e.message || e);
   }
-
+  console.log('notifyBudgetOverrun', { user_id, categoryName, month: budget.month, year: budget.year, spent, budgetAmount: budget.base_amount });
   // sanitize common placeholder strings that may have been stored accidentally
   if (typeof categoryName === 'string') {
     const cleaned = categoryName.trim();
@@ -57,7 +58,7 @@ async function notifyBudgetOverrun(user_id, budget, spent) {
       categoryName = cleaned;
     }
   }
-
+  console.log('notifyBudgetOverrun after sanitization', { user_id, categoryName, month: budget.month, year: budget.year, spent, budgetAmount: budget.base_amount });
   const displayCategory = categoryName || 'selected category';
   const message = `Your budget for ${displayCategory} (${budget.month}/${budget.year}) has been exceeded. Spent: ${spent}, Budget: ${budget.base_amount}`;
 

@@ -133,7 +133,7 @@ async function checkBudgetAndNotify(userId, category_id, transaction_date) {
     );
     const spent = Number(sres.rows[0]?.base_spent || 0);
     if (Number(budget.base_amount || 0) < spent) {
-      // fire-and-forget
+      console.log(userId,budget,spent,`Budget overrun detected. Notifying user.`);
       notificationService.notifyBudgetOverrun(userId, budget, spent).catch(e=>console.error(e));
     }
   } catch (e) {
