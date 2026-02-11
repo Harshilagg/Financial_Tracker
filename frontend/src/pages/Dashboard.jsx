@@ -804,7 +804,7 @@ export default function Dashboard() {
                     <div style={styles.categorySub}>Category</div>
                   </div>
                 </div>
-                <div style={styles.categoryAmount}>{formatCurrency(c.total)}</div>
+                <div style={styles.categoryAmount}>{formatCurrency(c.total,dashboard.base_currency)}</div>
               </div>
             ))}
           </div>
