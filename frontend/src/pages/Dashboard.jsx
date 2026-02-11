@@ -84,7 +84,8 @@ export default function Dashboard() {
       total_expense: data.total_expense || 0,
       savings: data.savings || 0,
       expense_by_category: data.expense_by_category || [],
-      monthly_summary: data.monthly_summary || []
+      monthly_summary: data.monthly_summary || [],
+      base_currency: data.base_currency || primaryCurrency
     });
     if (data.base_currency) setPrimaryCurrency(data.base_currency);
 
