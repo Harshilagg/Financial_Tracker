@@ -718,21 +718,24 @@ export default function Dashboard() {
 
       {/* SUMMARY CARDS */}
     <div style={styles.summary}>
-        <SummaryCard
-            title="Income"
-            value={dashboard.total_income}
-            color="#4CAF50"
-        />
-        <SummaryCard
-            title="Expense"
-            value={dashboard.total_expense}
-            color="#F44336"
-        />
-        <SummaryCard
-            title="Savings"
-            value={dashboard.savings}
-            color="#2196F3"
-        />
+      <SummaryCard
+        title="Income"
+        value={dashboard.total_income}
+        color="#4CAF50"
+        currency={dashboard.base_currency}
+      />
+      <SummaryCard
+        title="Expense"
+        value={dashboard.total_expense}
+        color="#F44336"
+        currency={dashboard.base_currency}
+      />
+      <SummaryCard
+        title="Savings"
+        value={dashboard.savings}
+        color="#2196F3"
+        currency={dashboard.base_currency}
+      />
     </div>
 
     {/* MONTHLY BAR CHART */}
@@ -876,9 +879,9 @@ export default function Dashboard() {
                         <div style={styles.transDate}>{formatDate(t.transaction_date)}</div>
                       </div>
                       <div style={{ ...styles.transAmount, color: '#2e7d32' }}>
-                        +{formatCurrency(t.amount, t.currency)}
+                        +{formatCurrency(t.base_amount, t.base_currency || dashboard.base_currency)}
                         <span style={{ fontSize: 12, color: "#777", marginLeft: 6 }}>
-                          ({formatCurrency(t.base_amount, "INR")})
+                          ({formatCurrency(t.amount, t.currency)})
                         </span>
                         {t.receipt_id && (
                           <div style={{ marginTop: 6 }}>
@@ -909,9 +912,9 @@ export default function Dashboard() {
                         <div style={styles.transDate}>{formatDate(t.transaction_date)}</div>
                       </div>
                       <div style={{ ...styles.transAmount, color: '#c62828' }}>
-                        -{formatCurrency(t.amount, t.currency)}
+                        -{formatCurrency(t.base_amount, t.base_currency || dashboard.base_currency)}
                         <span style={{ fontSize: 12, color: "#777", marginLeft: 6 }}>
-                          ({formatCurrency(t.base_amount, "INR")})
+                          ({formatCurrency(t.amount, t.currency)})
                         </span>
                         {t.receipt_id && (
                           <div style={{ marginTop: 6 }}>
@@ -1199,18 +1202,16 @@ export default function Dashboard() {
 
 /* ================= COMPONENT ================= */
 
-function SummaryCard({ title, value, color }) {
+function SummaryCard({ title, value, color, currency }) {
+  const safeCurrency = currency && currency.length === 3 ? currency : 'INR';
   const display = typeof value === 'number' || !isNaN(Number(value))
-    ? new Intl.NumberFormat("en-IN", {
-        style: "currency",
-        currency: "INR"
-        }).format(Number(value))
-            : value;
+    ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: safeCurrency }).format(Number(value))
+    : value;
 
   return (
     <div style={{ ...styles.card, borderTop: `4px solid ${color}` }}>
       <h4 style={{ margin: 0, color: '#333' }}>{title}</h4>
-      <p style={{ fontSize: 22, fontWeight: "700", marginTop: 8 }}>{display}</p>
+      <p style={{ fontSize: 22, fontWeight: '700', marginTop: 8 }}>{display}</p>
     </div>
   );
 }
