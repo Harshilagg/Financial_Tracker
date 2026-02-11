@@ -1,5 +1,5 @@
 
-Personal Finance Management System
+Fischer Jordan Backend Assignment for Financial Analysis
 
 ## Overview
 
