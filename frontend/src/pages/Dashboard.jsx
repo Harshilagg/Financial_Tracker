@@ -1219,199 +1219,235 @@ function SummaryCard({ title, value, color, currency }) {
 
 /* ================= STYLES ================= */
 
+const isMobile = window.innerWidth < 768;
+
 const styles = {
   container: {
-  padding: "40px",
-  maxWidth: "1400px",
-  margin: "auto",
-  fontFamily: "Inter, Arial, sans-serif",
-  background: "#f5f5dc",
-  minHeight: "100vh"
+    padding: isMobile ? "16px" : "40px",
+    maxWidth: "1400px",
+    margin: "auto",
+    fontFamily: "Inter, Arial, sans-serif",
+    background: "#f5f5dc",
+    minHeight: "100vh"
   },
 
   header: {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  padding: "24px 28px",
-  borderRadius: "12px",
-  marginBottom: "30px",
-  background: "linear-gradient(135deg, #1976d2, #42a5f5)",
-  color: "#fff",
-  boxShadow: "0 4px 14px rgba(0,0,0,0.12)"
+    display: "flex",
+    flexDirection: isMobile ? "column" : "row",
+    justifyContent: "space-between",
+    alignItems: isMobile ? "flex-start" : "center",
+    gap: isMobile ? "10px" : "0",
+    padding: "20px",
+    borderRadius: "12px",
+    marginBottom: "20px",
+    background: "linear-gradient(135deg, #1976d2, #42a5f5)",
+    color: "#fff",
+    boxShadow: "0 4px 14px rgba(0,0,0,0.12)"
   },
-    headerTitle: {
+
+  headerTitle: {
     margin: 0,
-    fontSize: "26px",
+    fontSize: isMobile ? "20px" : "26px",
     fontWeight: "700",
     letterSpacing: "0.3px"
-    },
+  },
 
-    headerSubtitle: {
+  headerSubtitle: {
     margin: "4px 0 0 0",
     opacity: 0.9,
     fontSize: "14px"
-    },
+  },
 
   logoutBtn: {
-  padding: "10px 16px",
-  background: "#ffffff",
-  color: "#1976d2",
-  border: "none",
-  borderRadius: "8px",
-  fontWeight: "600",
-  cursor: "pointer",
-  transition: "0.2s",
-  boxShadow: "0 2px 6px rgba(0,0,0,0.15)"
+    padding: "10px 16px",
+    background: "#ffffff",
+    color: "#1976d2",
+    border: "none",
+    borderRadius: "8px",
+    fontWeight: "600",
+    cursor: "pointer",
+    transition: "0.2s",
+    boxShadow: "0 2px 6px rgba(0,0,0,0.15)"
   },
 
   summary: {
-  display: "grid",
-  gridTemplateColumns: "repeat(3, 1fr)",
-  gap: "20px",
-  marginBottom: "20px"
+    display: "grid",
+    gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)",
+    gap: "20px",
+    marginBottom: "20px"
   },
+
   card: {
-    flex: 1,
     background: "#fff",
     padding: "15px",
-    borderRadius: "8px",
-    boxShadow: "0 2px 6px rgba(0,0,0,0.1)"
+    borderRadius: "12px",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.08)"
   },
+
   sectionTitle: {
     margin: 0,
     fontSize: 18,
-    color: '#222'
+    color: "#222"
   },
+
   emptyText: {
-    color: '#666'
+    color: "#666"
   },
+
   categoryList: {
-    display: 'grid',
+    display: "grid",
     gap: 10
   },
+
   categoryRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '8px 0',
-    borderBottom: '1px solid #f1f1f1'
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "8px 0",
+    borderBottom: "1px solid #f1f1f1"
   },
+
   categoryBullet: {
     width: 10,
     height: 10,
     borderRadius: 6,
-    background: '#4CAF50'
+    background: "#4CAF50"
   },
+
   categoryName: {
     fontWeight: 600
   },
+
   categorySub: {
     fontSize: 12,
-    color: '#777'
+    color: "#777"
   },
+
   categoryAmount: {
     fontWeight: 700
   },
+
   input: {
-    padding: '10px 12px',
+    padding: "10px 12px",
     borderRadius: 6,
-    border: '1px solid #ddd',
+    border: "1px solid #ddd",
     fontSize: 14
   },
+
   primaryBtn: {
-    padding: '10px 14px',
-    background: '#1976d2',
-    color: '#fff',
-    border: 'none',
+    padding: "10px 14px",
+    background: "#1976d2",
+    color: "#fff",
+    border: "none",
     borderRadius: 6,
-    cursor: 'pointer'
+    cursor: "pointer"
   },
+
   dangerBtn: {
-    padding: '6px 8px',
-    background: '#f44336',
-    color: '#fff',
-    border: 'none',
+    padding: "6px 8px",
+    background: "#f44336",
+    color: "#fff",
+    border: "none",
     borderRadius: 6,
-    cursor: 'pointer'
+    cursor: "pointer"
   },
+
   budgetGrid: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 320px',
+    display: "grid",
+    gridTemplateColumns: isMobile ? "1fr" : "1fr 320px",
     gap: 20,
-    alignItems: 'start'
+    alignItems: "start"
   },
+
   budgetList: {
     minWidth: 0
   },
+
   budgetFormCol: {
     minWidth: 0
   },
+
   smallCard: {
-    background: '#fafafa',
+    background: "#fafafa",
     padding: 12,
     borderRadius: 8,
-    border: '1px solid #eee'
+    border: "1px solid #eee"
   },
+
   remaining: {
-    color: '#333'
+    color: "#333"
   },
+
   section: {
     background: "#fff",
-    padding: "20px",
+    padding: isMobile ? "14px" : "20px",
     borderRadius: "8px",
     marginBottom: "20px",
     boxShadow: "0 2px 6px rgba(0,0,0,0.08)"
   },
+
   row: {
     display: "flex",
     justifyContent: "space-between",
     padding: "6px 0"
   },
+
   budgetCard: {
     marginBottom: "15px"
   },
+
   progressBar: {
     height: "8px",
     background: "#eee",
     borderRadius: "4px",
     margin: "6px 0"
   },
+
   progressFill: {
     height: "100%",
     borderRadius: "4px"
-  }
-  ,
+  },
+
   transCategory: {
     marginBottom: 12,
     padding: 8,
     borderRadius: 6,
-    background: '#fff',
-    border: '1px solid #f1f1f1'
+    background: "#fff",
+    border: "1px solid #f1f1f1"
   },
+
   transCategoryHeader: {
     fontWeight: 700,
     marginBottom: 8
   },
+
   transRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '6px 0',
-    borderTop: '1px dashed #f5f5f5'
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 6,
+    padding: "8px 0",
+    borderTop: "1px dashed #f5f5f5"
   },
+
   transLeft: {
-    display: 'flex',
-    flexDirection: 'column'
+    display: "flex",
+    flexDirection: "column"
   },
+
   transDesc: {
     fontSize: 14
   },
+
   transDate: {
     fontSize: 12,
-    color: '#777'
+    color: "#777"
   },
+
   transAmount: {
-    fontWeight: 700
+    fontWeight: 700,
+    minWidth: 80,
+    textAlign: "right"
   }
 };
