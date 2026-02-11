@@ -24,6 +24,8 @@ export default function Dashboard() {
   const [categoryForm, setCategoryForm] = useState({ name: "", type: "expense" });
   const [budgetForm, setBudgetForm] = useState({ category_id: "", amount: "", month: `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`, currency: "INR" });
 
+  const [primaryCurrency, setPrimaryCurrency] = useState('INR');
+
   const [transactionForm, setTransactionForm] = useState({
     type: "expense",
     category_id: "",
@@ -84,6 +86,7 @@ export default function Dashboard() {
       expense_by_category: data.expense_by_category || [],
       monthly_summary: data.monthly_summary || []
     });
+    if (data.base_currency) setPrimaryCurrency(data.base_currency);
 
   } catch (err) {
     console.error("Dashboard fetch failed:", err);
@@ -112,6 +115,69 @@ export default function Dashboard() {
       console.error("fetchBudgets error", err);
     }
   }, [token, logout, navigate]);
+
+  const handlePrimaryCurrencyChange = async (val) => {
+    if (!val) return;
+    try {
+      const res = await fetch('https://fj-be-r2-harshil-aggarwal-iit-kharagpur.onrender.com/api/users/primary-currency', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ primary_currency: val })
+      });
+
+      if (res.status === 401) {
+        logout();
+        navigate('/login', { replace: true });
+        return;
+      }
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || 'Failed to update primary currency');
+        return;
+      }
+
+      setPrimaryCurrency(data.primary_currency || val);
+      fetchDashboard();
+      fetchBudgets();
+      fetchTransactions();
+    } catch (e) {
+      console.error('update primary currency failed', e);
+      alert('Network error while updating primary currency');
+    }
+  };
+
+  const handleDeleteBudget = async (id) => {
+    if (!window.confirm('Delete this budget?')) return;
+    const previous = budgets;
+    setBudgets(prev => prev.filter(b => b.id !== id));
+    try {
+      const res = await fetch(`https://fj-be-r2-harshil-aggarwal-iit-kharagpur.onrender.com/api/budgets/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.status === 401) {
+        logout();
+        navigate('/login', { replace: true });
+        return;
+      }
+      if (!res.ok) {
+        const data = await res.json().catch(()=>({}));
+        alert(data.error || 'Failed to delete budget');
+        setBudgets(previous);
+        return;
+      }
+      fetchBudgets();
+      fetchDashboard();
+    } catch (e) {
+      console.error('delete budget failed', e);
+      alert('Network error deleting budget');
+      setBudgets(previous);
+    }
+  };
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -412,6 +478,13 @@ export default function Dashboard() {
     fetchNotifications();
   }, [token, fetchDashboard, fetchBudgets, fetchCategories, fetchTransactions, fetchNotifications]);
 
+  // keep forms default currency in sync with user's selected primary currency
+  useEffect(() => {
+    if (!primaryCurrency) return;
+    setTransactionForm((f) => ({ ...f, currency: primaryCurrency }));
+    setBudgetForm((b) => ({ ...b, currency: primaryCurrency }));
+  }, [primaryCurrency]);
+
   if (!token) return null;
 
   if (loading) {
@@ -622,6 +695,19 @@ export default function Dashboard() {
                    🔔 ({unreadNotifications.length}) new
                 </div>
               )}
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <label style={{ color: '#fff', fontSize: 13 }}>Primary:</label>
+                <select
+                  value={primaryCurrency}
+                  onChange={(e) => handlePrimaryCurrencyChange(e.target.value)}
+                  style={{ padding: '8px 10px', borderRadius: 6, border: 'none' }}
+                >
+                  <option value="INR">INR</option>
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                </select>
+              </div>
 
               <button style={styles.logoutBtn} onClick={handleLogout}>
                 Logout
@@ -1066,10 +1152,13 @@ export default function Dashboard() {
                         <div style={styles.row}>
                             <strong>{b.category}</strong>
 
-                            <span>
-                            {formatCurrency(spentToShow, b.base_currency)} /{" "}
-                            {formatCurrency(b.base_amount, b.base_currency)}
-                            </span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <span>
+                                {formatCurrency(spentToShow, b.base_currency)} /{" "}
+                                {formatCurrency(b.base_amount, b.base_currency)}
+                              </span>
+                              <button onClick={() => handleDeleteBudget(b.id)} style={styles.dangerBtn}>Delete</button>
+                            </div>
                         </div>
 
                         <div style={{ fontSize: 12, color: "#777" }}>

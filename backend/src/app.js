@@ -9,6 +9,7 @@ const budgetRoutes = require("./routes/budgetRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const receiptRoutes = require("./routes/receiptRoutes");
 const importRoutes = require("./routes/importRoutes");
+const userRoutes = require("./routes/userRoutes");
 
 const app = express();
 
@@ -43,6 +44,7 @@ app.use("/api/budgets", budgetRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/receipts", receiptRoutes);
 app.use("/api/imports", importRoutes);
+app.use("/api/users", userRoutes);
 
 
 module.exports = app;
